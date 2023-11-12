@@ -1,50 +1,42 @@
-#!/usr/bin/python3
-"""Module file_storage
-
-This Module contains a definition for FileStorage Class
-"""
-
-
-import importlib
+#!/usr/bin/python4
+"""__Modules__"""
 import json
-import os
-import re
+from models.base_model import BaseModel
+from models.user import User
+from models.place import Place
+from models.amenity import Amenity
+from models.state import State
+from models.review import Review
+from models.city import City
 
 
 class FileStorage:
-    """FileStorage Class
-
-    Attributes:
-        __file_path (str): string - path to the JSON file
-        __objects (dict): A dictionary of instantiated objects.
-
-    """
-    __file_path = "file.json"
+    """File Storage Class"""
+    __file_path = 'file.json'
     __objects = {}
 
     def all(self):
-        """returns the dictionary __objects"""
-        return self.__objects
+        return FileStorage.__objects
 
     def new(self, obj):
-        """Set in __objects obj with key <obj_class_name>.id"""
-        self.__objects[f"{obj.__class__.__name__}.{obj.id}"] = obj
+        FileStorage.__objects.update(
+            {f"{obj.__class__.__name__}.{obj.id}": obj})
 
     def save(self):
-        """Serialize __objects to the JSON file __file_path."""
-        with open(self.__file_path, 'w') as f:
-            json.dump({k: v.to_dict() for k, v in self.__objects.items()}, f)
+        with open(FileStorage.__file_path, 'w', encoding='utf-8') as fjson:
+            json.dump({k: v.to_dict()
+                      for k, v in FileStorage.__objects.items()}, fjson)
 
     def reload(self):
-        """Deserialize the JSON file __file_path to __objects, if it exists."""
-        if (os.path.isfile(self.__file_path)
-                and os.path.getsize(self.__file_path) > 0):
-            with open(self.__file_path, 'r') as f:
-                self.__objects = {k: self.get_class(k.split(".")[0])(**v)
-                                  for k, v in json.load(f).items()}
+        cnmti = {
+            'BaseModel': BaseModel, 'User': User, 'Place': Place,
+            'City': City, 'State': State, 'Amenity': Amenity, 'Review': Review
+        }
+        try:
+            with open(FileStorage.__file_path, 'r', encoding='utf-8') as fjson:
+                items_ = json.load(fjson).items()
+                FileStorage.__objects.update(
+                    {k: cnmti[v['__class__']](**v) for k, v in items_})
 
-    def get_class(self, name):
-        """ returns a class from models module using its name"""
-        sub_module = re.sub('(?!^)([A-Z]+)', r'_\1', name).lower()
-        module = importlib.import_module(f"models.{sub_module}")
-        return getattr(module, name)
+        except FileNotFoundError:
+            pass
