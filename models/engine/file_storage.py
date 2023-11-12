@@ -1,5 +1,5 @@
-#!/usr/bin/python4
-"""__Modules__"""
+#!/usr/bin/python3
+"""Module documentation"""
 import json
 from models.base_model import BaseModel
 from models.user import User
@@ -15,28 +15,33 @@ class FileStorage:
     __file_path = 'file.json'
     __objects = {}
 
-    def all(self):
-        return FileStorage.__objects
+    @classmethod
+    def all(cls):
+        """Returns the dictionary __objects"""
+        return cls.__objects
 
-    def new(self, obj):
-        FileStorage.__objects.update(
-            {f"{obj.__class__.__name__}.{obj.id}": obj})
+    @classmethod
+    def new(cls, obj):
+        """Adds a new object to __objects"""
+        key = f"{obj.__class__.__name__}.{obj.id}"
+        cls.__objects[key] = obj
 
-    def save(self):
-        with open(FileStorage.__file_path, 'w', encoding='utf-8') as fjson:
-            json.dump({k: v.to_dict()
-                      for k, v in FileStorage.__objects.items()}, fjson)
+    @classmethod
+    def save(cls):
+        """Saves __objects to a JSON file"""
+        with open(cls.__file_path, 'w', encoding='utf-8') as function:
+            json.dump({k: v.to_dict() for k, v in cls.__objects.items()}, function)
 
-    def reload(self):
-        cnmti = {
+    @classmethod
+    def reload(cls):
+        """Loads objects from a JSON file"""
+        class_name_mapping = {
             'BaseModel': BaseModel, 'User': User, 'Place': Place,
             'City': City, 'State': State, 'Amenity': Amenity, 'Review': Review
         }
         try:
-            with open(FileStorage.__file_path, 'r', encoding='utf-8') as fjson:
-                items_ = json.load(fjson).items()
-                FileStorage.__objects.update(
-                    {k: cnmti[v['__class__']](**v) for k, v in items_})
-
+            with open(cls.__file_path, 'r', encoding='utf-8') as function:
+                items = json.load(function).items()
+                cls.__objects.update({k: class_name_mapping[v['__class__']](**v) for k, v in items})
         except FileNotFoundError:
             pass
