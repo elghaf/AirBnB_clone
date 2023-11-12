@@ -23,8 +23,9 @@ class FileStorage:
     @classmethod
     def new(cls, obj):
         """Adds a new object to __objects"""
-        key = f"{obj.__class__.__name__}.{obj.id}"
-        cls.__objects[key] = obj
+
+        index = "{}.{}".format(type(obj).__name__, obj.id)
+        FileStorage.__objects[index] = obj
 
     @classmethod
     def save(cls):

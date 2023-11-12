@@ -11,21 +11,19 @@ class BaseModel:
     def __init__(self, *args, **kwargs):
         """Initializer method."""
         if kwargs:
-            self.__load_from_dict(kwargs)
+            for index in kwargs:
+                if index == "created_at":
+                    self.__dict__["created_at"] = datetime.strptime(
+                        kwargs["created_at"], "%Y-%m-%dT%H:%M:%S.%f")
+                elif index == "updated_at":
+                    self.__dict__["updated_at"] = datetime.strptime(
+                        kwargs["updated_at"], "%Y-%m-%dT%H:%M:%S.%f")
+                else:
+                    self.__dict__[index] = kwargs[index]
         else:
             self.id = str(uuid.uuid4())
             self.created_at = self.updated_at = datetime.now()
             models.storage.new(self)
-
-    def __load_from_dict(self, dictionary):
-        """Load data from dictionary."""
-        self.__dict__.update(dictionary)
-        self.__dict__.pop('__class__', None)
-
-        for attr in ('created_at', 'updated_at'):
-            if attr in self.__dict__:
-                self.__dict__[attr] = datetime.fromisoformat(
-                    self.__dict__[attr])
 
     def __str__(self):
         """String representation of the object."""
@@ -38,10 +36,8 @@ class BaseModel:
         models.storage.save()
 
     def to_dict(self):
-        """Return a dictionary containing all keys/values of the instance."""
-        obj_dict = {**self.__dict__}
-        for attr in ('created_at', 'updated_at'):
-            if attr in obj_dict:
-                obj_dict[attr] = obj_dict[attr].isoformat()
+        obj_dict = self.__dict__.copy()
         obj_dict['__class__'] = self.__class__.__name__
+        obj_dict['created_at'] = self.created_at.isoformat()
+        obj_dict['updated_at'] = self.updated_at.isoformat()
         return obj_dict
