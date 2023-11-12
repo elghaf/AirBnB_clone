@@ -1,7 +1,5 @@
 #!/usr/bin/python3
-"""Module console
-
-This Module contains a definition for HBNB Command Class
+"""Console module
 """
 
 import cmd
@@ -14,116 +12,117 @@ from models import storage
 
 
 class HBNBCommand(cmd.Cmd):
-    """AirBnB clone console"""
+    """HBNB CLASS CLONE"""
 
     prompt = "(hbnb) "
 
     def do_quit(self, line):
-        """Quit command to exit the program\n"""
+        """Quit command"""
         return True
 
     def do_EOF(self, line):
-        """Exist the console using Ctrl + D"""
+        """Exist Ctrl + D"""
         print()
         return True
 
-    def emptyline(self):
-        """prevents the behavior of cmd to ignore running command on
-        empty line plus enter
-        """
-        pass
 
     def do_create(self, line):
         """creates a new object and saves it"""
-        obj_cls = self.get_class_from_input(line)
-        if obj_cls is not None:
-            new_obj = obj_cls()
-            new_obj.save()
-            print(new_obj.id)
+        class_type = self.get_class_from_input(line)
+        if class_type:
+            class_types = class_type()
+            class_types.save()
+            print(class_types.id)
 
     def do_show(self, line):
-        """prints the string representation of an instance based on name and id
+        """prints the string of inst (name, id)
         """
-        key = self.get_obj_key_from_input(line)
-        if key is None:
-            return
+        object_key = self.get_obj_key_from_input(line)
 
-        saved_obj = storage.all().get(key, None)
-        if saved_obj is None:
-            print("** no instance found **")
-        else:
-            print(saved_obj)
+        if object_key:
+            stored_instance = storage.all().get(object_key, None)
+
+            if stored_instance:
+                print(stored_instance)
+            else:
+                print("inst not found")
 
     def do_destroy(self, line):
-        """deletes an instance based on the class name and id and saves the
-        change into the JSON file
+        """deletes an instance
         """
-        key = self.get_obj_key_from_input(line)
-        if key is None:
-            return
+        object_key = self.get_obj_key_from_input(line)
 
-        saved_obj = storage.all().pop(key, None)
-        if saved_obj is None:
-            print("** no instance found **")
-        else:
-            storage.save()
+        if object_key:
+            stored_instance = storage.all().pop(object_key, None)
+
+            if stored_instance:
+                storage.save()
+            else:
+                print("not found")
 
     def do_all(self, line):
-        """prints all string representation of all instances based or not on
-        the class name
+        """prints all string representation inst the class name
         """
-        if len(line.split()) == 0:
+        arguments = line.split()
+
+        if not arguments:
             result = storage.all().values()
         else:
             obj_cls = self.get_class_from_input(line)
+
             if obj_cls is None:
                 return
-            result = list(filter(lambda item: isinstance(
-                item, obj_cls), storage.all().values()))
+
+            result = filter(lambda item: isinstance(item, obj_cls), storage.all().values())
 
         print([str(item) for item in result])
 
     def do_update(self, line):
-        """updates an instance based on the class name and id by adding or
-        updating attribute and saves the change into the JSON file
+        """updates an inst
         """
-        key = self.get_obj_key_from_input(line)
-        if key is None:
+        object_key = self.get_obj_key_from_input(line)
+
+        if not object_key:
             return
 
-        saved_obj = storage.all().get(key, None)
-        if saved_obj is None:
-            print("** no instance found **")
-        else:
-            attr_name, attr_val = self.get_attribute_name_value_pair(line)
-            if attr_name is None or attr_val is None:
-                return
+        stored_instance = storage.all().get(object_key)
 
-            if hasattr(saved_obj, attr_name):
-                attr_type = type(getattr(saved_obj, attr_name))
-                attr_val = cast(attr_type, attr_val)
-            setattr(saved_obj, attr_name, attr_val)
-            saved_obj.save()
+        if not stored_instance:
+            print("not found")
+            return
+
+        attribute_name, attribute_value = self.get_attribute_name_value_pair(line)
+
+        if attribute_name is None or attribute_value is None:
+            return
+
+        if hasattr(stored_instance, attribute_name):
+            attribute_type = type(getattr(stored_instance, attribute_name))
+            attribute_value = cast(attribute_type, attribute_value)
+
+        setattr(stored_instance, attribute_name, attribute_value)
+        stored_instance.save()
+
 
     def do_count(self, line):
-        """prints the count of all instances based the class name"""
-        obj_cls = self.get_class_from_input(line)
-        if obj_cls is None:
-            return
-        result = list(filter(lambda item: isinstance(
-            item, obj_cls), storage.all().values()))
+        """prints cts instance"""
+        do_cont = self.get_class_from_input(line)
 
-        print(len(result))
+        if do_cont is None:
+            return
+
+        do_cots = sum(1 for item in storage.all().values() if isinstance(item, do_cont))
+        print(do_cots)
 
     def get_obj_key_from_input(self, line):
         """parses and returns object key from input"""
         obj_cls = self.get_class_from_input(line)
-        if obj_cls is None:
+        id_value = self.get_id_from_input(line)
+
+        if obj_cls is None or id_value is None:
             return None
-        id = self.get_id_from_input(line)
-        if id is None:
-            return None
-        return f"{obj_cls.__name__}.{id}"
+
+        return f"{obj_cls.__name__}.{id_value}"
 
     def get_class_from_input(self, line):
         """parses and returns class from input"""
