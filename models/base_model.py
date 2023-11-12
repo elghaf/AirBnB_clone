@@ -18,3 +18,4 @@ def __init__(self, *args, **kwargs):
                 value = datetime.strptime(value, date_format)
             if key != '__class__':
                 setattr(self, key, value)
+
