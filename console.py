@@ -12,195 +12,232 @@ import json
 import re
 from models import storage
 
+import re
+from typing import Type
+
+
+import re
+from typing import Type
 
 class HBNBCommand(cmd.Cmd):
-    """class HBNBCommand documentation"""
+    """Interactive command-line interface for HBNB project."""
 
     prompt = '(hbnb) '
 
-    def precmd(self, arg):
+    def precmd(self, argument):
         """Hook method executed just before the command is processed."""
+        if re.search(".+.all\(\)", argument) or argument == ".all()":
+            return f"all {argument[:-6]}"
+        elif re.search(".+.count\(\)", argument) or argument == ".count()":
+            return f"count {argument[:-8]}"
+        return argument
 
-        if re.search(".+.all\(\)", arg) or arg == ".all()":
-            return f"all {arg[:-6]}"
-
-        elif re.search(".+.count\(\)", arg) or arg == ".count()":
-            return f"count {arg[:-8]}"
-
-        return arg
-
-    def do_quit(self, arg):
-        """Quit command to exit the program"""
+    def do_quit(self, argument):
+        """Quit command to exit the program."""
         return True
 
-    def do_EOF(self, arg):
-        """do_EOF is a method provided by the cmd.Cmd module. It is called when
-the user presses Ctrl+D (Unix-like systems) or Ctrl+Z (Windows). By default,
-it returns True, which will exit the command loop and terminate the program.
-This is why when you press Ctrl+D in the interactive shell, it exits the
-program.You can override this method to customize the behavior when EOF
-is encountered. For example, if you want to ignore EOF and continue processing,
-you can return False."""
+    def do_EOF(self, argument):
+        """Handles the end-of-file (EOF) condition."""
+        print()
         return True
 
     def emptyline(self):
-        """Method called when an empty line is entered in response to the
-prompt. If this method is not overridden, it repeats the last nonempty command
-entered."""
+        """Method called when an empty line is entered."""
         pass
 
-    def do_create(self, arg):
-        """ Creates a new instance of Classes, saves it (to the JSON file)
-and prints the id"""
-        toClasses = {
+    def do_create(self, argument):
+        """Creates a new instance, saves it, and prints the id."""
+        class_mapping = {
             'BaseModel': BaseModel, 'User': User, 'Place': Place,
             'City': City, 'State': State, 'Amenity': Amenity, 'Review': Review
         }
 
-        m_list = arg.split()
-        if len(m_list) < 1:
+        arguments = argument.split()
+
+        if len(arguments) < 1:
             print("** class name missing **")
             return
-        class_name = m_list[0]
-        if class_name not in toClasses.keys():
+
+        class_name = arguments[0]
+
+        if class_name not in class_mapping:
             print("** class doesn't exist **")
             return
-        new_ins = eval(m_list[0])()
-        new_ins.save()
-        print(new_ins.id)
 
-    def do_show(self, arg):
-        """Prints the string representation of an instance based on the
-class name and id"""
-        toClasses = {
+        new_instance = class_mapping[class_name]()
+        new_instance.save()
+        print(new_instance.id)
+
+    def do_show(self, argument):
+        """Prints the string representation of an instance."""
+        class_mapping = {
             'BaseModel': BaseModel, 'User': User, 'Place': Place,
             'City': City, 'State': State, 'Amenity': Amenity, 'Review': Review
         }
 
-        if len(arg.split()) < 1:
+        arguments = argument.split()
+
+        if len(arguments) < 1:
             print("** class name missing **")
             return
-        if (arg.split()[0] not in toClasses.keys()):
+
+        class_name = arguments[0]
+
+        if class_name not in class_mapping:
             print("** class doesn't exist **")
             return
-        if len(arg.split()) < 2:
+
+        if len(arguments) < 2:
             print("** instance id missing **")
             return
 
         storage.reload()
 
-        for k, v in storage.all().items():
-            if k == f"{arg.split()[0]}.{arg.split()[1]}":
-                print(v)
+        key_to_find = "{}.{}".format(class_name, arguments[1])
+
+        for key, value in storage.all().items():
+            if key == key_to_find:
+                print(value)
                 return
 
         print("** no instance found **")
 
-    def do_destroy(self, arg):
-        """ Deletes an instance based on the class name and id"""
-        Classes = {
+    def do_destroy(self, argument):
+        """Deletes an instance based on the class name and id."""
+        class_mapping = {
             'BaseModel': BaseModel, 'User': User, 'Place': Place,
             'City': City, 'State': State, 'Amenity': Amenity, 'Review': Review
         }
-        if (len(arg.split()) < 1):
+
+        arguments = argument.split()
+
+        if len(arguments) < 1:
             print("** class name missing **")
             return
-        if (arg.split()[0] not in Classes.keys()):
+
+        class_name = arguments[0]
+
+        if class_name not in class_mapping:
             print("** class doesn't exist **")
             return
-        if (len(arg.split()) < 2):
+
+        if len(arguments) < 2:
             print("** instance id missing **")
             return
-        storage.reload()
-        key_to_del = "{}.{}".format(arg.split()[0], arg.split()[1])
 
-        if key_to_del in storage.all():
-            del storage.all()[key_to_del]
+        storage.reload()
+        key_to_delete = "{}.{}".format(class_name, arguments[1])
+
+        instances = storage.all()
+
+        if key_to_delete in instances:
+            del instances[key_to_delete]
             storage.save()
         else:
             print("** no instance found **")
 
-    def do_all(self, arg):
-        """Prints all string representation of all instances based or not on
-the class name."""
-        dic = {
+    def do_all(self, argument):
+        """Prints all string representation of all instances."""
+        class_mapping = {
             'BaseModel': BaseModel, 'User': User, 'Place': Place,
             'City': City, 'State': State, 'Amenity': Amenity, 'Review': Review
         }
+
         storage.reload()
-        m_list = []
-        if (not arg):
-            for key, value in storage.all().items():
-                m_list.append(str(value))
+        instances_list = []
 
-        if (len(arg.split()) == 1):
-            if (arg.split()[0] in dic):
-                for k, v in storage.all().items():
-                    if v.__class__.__name__ == arg.split()[0]:
-                        m_list.append(str(v))
-            else:
-                print("** class doesn't exist **")
-                return
-        print(m_list)
+        if not argument:
+            for value in storage.all().values():
+                instances_list.append(str(value))
 
-    def do_count(self, arg):
-        dic = {
-            'BaseModel': BaseModel, 'User': User, 'Place': Place,
-            'City': City, 'State': State, 'Amenity': Amenity, 'Review': Review
-        }
-        storage.reload()
-        m_list = []
-        if (not arg):
-            for key, value in storage.all().items():
-                m_list.append(str(value))
-
-        if (len(arg.split()) == 1):
-            if (arg.split()[0] in dic):
-                for k, v in storage.all().items():
-                    if v.__class__.__name__ == arg.split()[0]:
-                        m_list.append(str(v))
+        if len(argument.split()) == 1:
+            if argument.split()[0] in class_mapping:
+                for value in storage.all().values():
+                    if value.__class__.__name__ == argument.split()[0]:
+                        instances_list.append(str(value))
             else:
                 print("** class doesn't exist **")
                 return
 
-        print(len(m_list))
+        print(instances_list)
 
-    def do_update(self, arg):
-        """Updates an instance based on the class name and id by adding
-or updating attribute"""
-        dic = {
+    def do_count(self, argument):
+        """Prints the count of instances based on the class name."""
+        class_mapping = {
             'BaseModel': BaseModel, 'User': User, 'Place': Place,
             'City': City, 'State': State, 'Amenity': Amenity, 'Review': Review
         }
-        if (len(arg.split()) < 1):
+
+        storage.reload()
+        instances_list = []
+
+        if not argument:
+            for value in storage.all().values():
+                instances_list.append(str(value))
+
+        if len(argument.split()) == 1:
+            if argument.split()[0] in class_mapping:
+                for value in storage.all().values():
+                    if value.__class__.__name__ == argument.split()[0]:
+                        instances_list.append(str(value))
+            else:
+                print("** class doesn't exist **")
+                return
+
+        print(len(instances_list))
+
+    def do_update(self, argument):
+        """Updates an instance based on the class name and id."""
+        class_mapping = {
+            'BaseModel': BaseModel, 'User': User, 'Place': Place,
+            'City': City, 'State': State, 'Amenity': Amenity, 'Review': Review
+        }
+
+        arguments = argument.split()
+
+        if len(arguments) < 1:
             print("** class name missing **")
             return
-        if (arg.split()[0] not in dic.keys()):
+
+        class_name = arguments[0]
+
+        if class_name not in class_mapping:
             print("** class doesn't exist **")
             return
-        if (len(arg.split()) < 2):
+
+        if len(arguments) < 2:
             print("** instance id missing **")
             return
-        if (len(arg.split()) < 3):
+
+        if len(arguments) < 3:
             print("** attribute name missing **")
             return
+
         storage.reload()
         instances = storage.all()
-        key = "{}.{}".format(arg.split()[0], arg.split()[1])
+
+        key = "{}.{}".format(class_name, arguments[1])
+
         if key not in instances:
             print("** no instance found **")
             return
-        if (len(arg.split()) < 4):
+
+        if len(arguments) < 4:
             print("** value missing **")
             return
+
         instance = instances[key]
-        attribute_name = arg.split()[2]
-        attribute_value = arg.split()[3]
+        attribute_name = arguments[2]
+        attribute_value = arguments[3]
+
         if not hasattr(instance, attribute_name):
             setattr(instance, attribute_name, attribute_value)
+
         setattr(instance, attribute_name,
                 type(getattr(instance, attribute_name))(attribute_value))
+
         instance.save()
+
 
 
 if __name__ == '__main__':
