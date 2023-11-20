@@ -8,9 +8,9 @@ header {
   }
   
   .logo {
-    width: 50px; /* Adjust the width of the logo as needed */
-    height: 50px; /* Adjust the height of the logo as needed */
-    background-image: url('images/logo.png'); /* Add your own image path */
+    width: 50px;
+    height: 50px;
+    background-image: url('images/logo.png');
     background-size: cover;
     margin-left: 20px;
   }
