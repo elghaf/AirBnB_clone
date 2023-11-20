@@ -6,9 +6,7 @@ body {
     color: #484848;
   }
   
-  /* Additional styles for the browser tab icon */
-  /* Use a square icon for better results (e.g., 16x16 pixels) */
-  /* Add your own image path in url() */
+
   head {
     display: block;
     content: url('images/tab-icon.png');
