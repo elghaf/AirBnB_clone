@@ -7,6 +7,11 @@
     justify-content: center;
 }
 
+.places > article > h2 {
+    font-size: 30px;
+}
+
+
 .places > h1 {
     font-size: 30px;
     padding-left: 20px;
@@ -24,6 +29,3 @@
     justify-content: center;
 }
 
-.places > article > h2 {
-    font-size: 30px;
-}
